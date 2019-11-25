@@ -26,14 +26,14 @@ def upgrade():
     op.create_table('rating',
     sa.Column('id', sa.BigInteger(), nullable=False),
     sa.Column('rating_code', sa.String(), nullable=False),
-    sa.Column('create_time', sa.DateTime(), nullable=False),
+    sa.Column('create_time', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
     sa.ForeignKeyConstraint(['rating_code'], ['rating_code.rating_code'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('feedback',
     sa.Column('id', sa.BigInteger(), nullable=False),
     sa.Column('comment', sa.Integer(), nullable=False),
-    sa.Column('create_time', sa.DateTime(), nullable=False),
+    sa.Column('create_time', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
     sa.Column('rating_id', sa.BigInteger(), nullable=True),
     sa.ForeignKeyConstraint(['rating_id'], ['rating.id'], ),
     sa.PrimaryKeyConstraint('id')
