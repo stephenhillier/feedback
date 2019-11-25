@@ -1,0 +1,26 @@
+version: '3.3'
+services:
+  backend: 
+    build: 
+      context: api
+      args: 
+        env: dev
+    command: /app/start-reload.sh
+    volumes:
+      - ./api:/app
+    env_file:
+      - env-postgres.env
+    ports:
+      - '8000:8000'
+    networks:
+      default:
+    depends_on: 
+      - db
+  db:
+    image: postgres:12
+    env_file:
+      - env-postgres.env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - '5432:5432'
