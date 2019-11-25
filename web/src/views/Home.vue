@@ -24,7 +24,8 @@
               <div class="flex-1 text-center">
                 <h5 class="uppercase text-teal-800">Most loved feature</h5>
                 <h3 class="text-3xl text-gray-800">
-                  {{summary.most_positive}}
+                  {{summary.most_positive.feature_name}}
+                  ({{summary.most_positive.ratings_count}})
                 </h3>
               </div>
             </div>
@@ -37,7 +38,8 @@
             <div class="flex flex-row items-center">
               <div class="flex-1 text-center">
                 <h5 class="uppercase text-teal-800">Could use some work</h5>
-                <h3 class="text-3xl text-gray-800">{{summary.most_negative}}</h3>
+                <h3 class="text-3xl text-gray-800">{{summary.most_negative.feature_name}}
+                  ({{summary.most_negative.ratings_count}})</h3>
               </div>
             </div>
           </div>
@@ -55,25 +57,19 @@ import axios from 'axios';
   },
 })
 export default class FeedbackHome extends Vue {
-  summary = {
-    overall_positive: 40,
-    overall_neutral: 30,
-    overall_negative: 30,
-    most_positive: 'Cat photo popup',
-    most_negative: 'Rest of website',
-  }
+  summary = {}
 
   fetchSummary() {
     axios
-      .get('http://localhost:8000/api/v1/ratings')
+      .get('http://localhost:8000/ratings')
       .then((r) => {
         this.summary = r.data;
       })
       .catch((e) => {});
   }
 
-  // created() {
-  //   this.fetchSummary();
-  // }
+  created() {
+    this.fetchSummary();
+  }
 }
 </script>

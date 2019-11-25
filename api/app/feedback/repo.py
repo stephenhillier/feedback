@@ -69,7 +69,33 @@ feature = Feature.__table__
 
 async def get_ratings(db: Database):
     """ get ratings summary """
-    return []
+
+    most_positive_q = """
+    SELECT
+        f.name as feature_name,
+        count(*) as ratings_count
+    FROM
+        feature as f
+    INNER JOIN
+        rating as r ON r.feature_id = f.id
+    WHERE r.rating_code = 'positive'
+    GROUP BY
+        feature_name
+    ORDER BY count(*) desc
+    LIMIT 1;
+    """
+    most_positive_result = await db.fetch_one(query=most_positive_q)
+
+    return {
+        "most_positive": most_positive_result,
+        "overall_positive": 40,
+        "overall_negative": 30,
+        "overall_neutral": 30,
+        "most_negative": {
+            "feature_name": "Rest of website",
+            "ratings_count": 12
+        }
+    }
 
 async def add_feature(db: Database, feature_name: str):
     """ adds a new feature with a given name """

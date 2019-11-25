@@ -12,7 +12,7 @@ from starlette.requests import Request
 from app.config import DATABASE_URI
 
 from app.feedback.models import RatingRequest
-from app.feedback.repo import add_rating as repo_add_rating
+from app.feedback.repo import add_rating as repo_add_rating, get_ratings as repo_get_ratings
 
 database = databases.Database(DATABASE_URI)
 
@@ -47,7 +47,11 @@ async def shutdown():
 def health_check():
     return {"status": "ok"}
 
-@app.post("/rating")
+@app.get("/ratings")
+async def get_ratings():
+    return await repo_get_ratings(database)
+
+@app.post("/ratings")
 async def add_rating(rating: RatingRequest, req: Request):
 
     # if the url was not provided, try to get it from the request header.
