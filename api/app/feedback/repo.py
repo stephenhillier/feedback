@@ -70,6 +70,34 @@ feature = Feature.__table__
 async def get_ratings(db: Database):
     """ get ratings summary """
 
+
+    q = """
+    
+    WITH rated_features AS (
+        SELECT
+            f.name as feature_name,
+            SUM(
+                CASE
+                    WHEN r.rating_code = 'positive' then 1
+                    WHEN r.rating_code = 'negative' then -1
+                    ELSE 0 END
+            ) as ratings_sum
+        FROM
+            feature as f
+        INNER JOIN
+            rating as r ON r.feature_id = f.id
+        GROUP BY
+            feature_name
+        ORDER BY count(*) desc
+    ) SELECT DISTINCT
+        FIRST_VALUE(feature_name) OVER() AS top_feature,
+        FIRST_VALUE(ratings_sum) OVER() AS top_feature_rating,
+        LAST_VALUE(feature_name) OVER() AS low_feature,
+        LAST_VALUE(ratings_sum) OVER() AS low_feature_rating
+    FROM rated_features;
+
+    """
+
     most_positive_q = """
     SELECT
         f.name as feature_name,
