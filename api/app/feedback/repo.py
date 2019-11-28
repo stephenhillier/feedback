@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from databases import Database
 from app.db.base_class import BaseTable
 
-from app.feedback.models import RatingRequest
+from app.feedback.models import RatingRequest, RatingSummary
 
 logger = logging.getLogger("api")
 
@@ -88,42 +88,30 @@ async def get_ratings(db: Database):
             rating as r ON r.feature_id = f.id
         GROUP BY
             feature_name
-        ORDER BY count(*) desc
+        ORDER BY ratings_sum desc
     ) SELECT DISTINCT
-        FIRST_VALUE(feature_name) OVER() AS top_feature,
-        FIRST_VALUE(ratings_sum) OVER() AS top_feature_rating,
-        LAST_VALUE(feature_name) OVER() AS low_feature,
-        LAST_VALUE(ratings_sum) OVER() AS low_feature_rating
-    FROM rated_features;
-
+        FIRST_VALUE(feature_name) OVER w AS most_positive,
+        FIRST_VALUE(ratings_sum) OVER w AS most_positive_rating,
+        LAST_VALUE(feature_name) OVER w AS most_negative,
+        LAST_VALUE(ratings_sum) OVER w AS most_negative_rating,
+        (
+            SELECT count(*) FROM rating WHERE rating_code = 'positive'
+        ) AS overall_positive,
+        (
+            SELECT count(*) FROM rating WHERE rating_code = 'negative'
+        ) AS overall_negative,
+        (
+            SELECT count(*) FROM rating WHERE rating_code = 'neutral'
+        ) AS overall_neutral,
+        (
+            SELECT count(*) FROM rating
+        ) AS overall_ratings
+    FROM rated_features
+    WINDOW w AS ();
     """
 
-    most_positive_q = """
-    SELECT
-        f.name as feature_name,
-        count(*) as ratings_count
-    FROM
-        feature as f
-    INNER JOIN
-        rating as r ON r.feature_id = f.id
-    WHERE r.rating_code = 'positive'
-    GROUP BY
-        feature_name
-    ORDER BY count(*) desc
-    LIMIT 1;
-    """
-    most_positive_result = await db.fetch_one(query=most_positive_q)
-
-    return {
-        "most_positive": most_positive_result,
-        "overall_positive": 40,
-        "overall_negative": 30,
-        "overall_neutral": 30,
-        "most_negative": {
-            "feature_name": "Rest of website",
-            "ratings_count": 12
-        }
-    }
+    summary = await db.fetch_one(query=q)
+    return RatingSummary(**summary)
 
 async def add_feature(db: Database, feature_name: str):
     """ adds a new feature with a given name """
